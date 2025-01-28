@@ -5,6 +5,8 @@ import pandas as pd
 import streamlit as st
 import nltk
 import requests
+
+
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from PyPDF2 import PdfReader
@@ -13,13 +15,15 @@ from bs4 import BeautifulSoup
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-nltk.download("stopwords", quiet=True)
-nltk.download("punkt", quiet=True)
-nltk.download("wordnet", quiet=True)
+nltk.download("stopwords")
+nltk.download("punkt")
+nltk.download("wordnet")
 
 lemmer = WordNetLemmatizer()
 stopwords_list = stopwords.words("english")
-custom_stopwords = stopwords_list + [
+
+
+stop_words_list = stopwords_list + [
     "things", "that's", "something", "take", "don't", "may", "want", "you're",
     "set", "might", "says", "including", "lot", "much", "said", "know", "good",
     "step", "often", "going", "thing", "things", "think", "back", "actually",
@@ -33,7 +37,7 @@ def preprocess_text(text):
     text = re.sub(r"[%s]" % re.escape(string.punctuation), " ", text)
     text = re.sub(r"\d+", "", text)
     text = re.sub(r"\s{2,}", " ", text)
-    return " ".join([lemmer.lemmatize(word) for word in text.split() if word not in custom_stopwords])
+    return " ".join([lemmer.lemmatize(word) for word in text.split() if word not in stop_words_list])
 
 def extract_text_from_file(file):
     if file.name.endswith(".pdf"):
@@ -58,9 +62,9 @@ def run_search_tool():
     st.set_page_config(page_title="Document & Web Search", page_icon="📄", layout="wide")
 
     st.title("📄 Search Tool")
-    st.markdown("Upload PDFs/DOCX or provide URLs for content search.")
+    st.markdown("Upload files or provide URLs for content search.")
 
-    uploaded_files = st.file_uploader("Upload PDF/DOCX", accept_multiple_files=True)
+    uploaded_files = st.file_uploader("Upload File", accept_multiple_files=True)
     website_links = st.text_area("Enter URLs (one per line)")
 
     documents = []
@@ -85,7 +89,7 @@ def run_search_tool():
             analyzer="word",
             ngram_range=(1, 2),
             max_features=10000,
-            stop_words=custom_stopwords
+            stop_words=stop_words_list
         )
         tfidf_matrix = vectorizer.fit_transform(documents)
 
@@ -104,9 +108,8 @@ def run_search_tool():
             st.subheader("🔍 Results")
             for rank, (index, score) in enumerate(ranked_results):
                 if score > 0:
-                    st.markdown(f"**Title:** {titles[index]}")
-                    st.markdown(f"**Score:** {score:.2f}")
-                    st.write(f"**Snippet:** {documents[index][:500]}...")
+                    st.markdown(f"**Title:** {titles[index]} **Score:** {score:.2f}")
+                    st.write(f"**result:** {documents[index][:500]}...")
                     st.markdown("<hr>", unsafe_allow_html=True)
     else:
         st.info("Upload files or enter URLs to search.")
